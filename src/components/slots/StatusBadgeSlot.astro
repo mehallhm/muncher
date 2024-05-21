@@ -1,0 +1,23 @@
+---
+interface Props {
+	location: string;
+	date: string;
+}
+
+const { location, date } = Astro.props;
+---
+
+<div
+	hx-get={"/api/status/statusBadge?location=" +
+		location +
+		"&" +
+		"date=" +
+		date}
+	hx-swap="innerHTML"
+	hx-trigger="load"
+	transition:persist={location}
+>
+	<div id="status-badge" class="flex justify-center gap-2">
+		<div id="status-badge" class="badge">Fetching Status...</div>
+	</div>
+</div>

@@ -1,0 +1,31 @@
+---
+import Layout from "../layouts/Layout.astro";
+import HoursTableSlot from "@components/slots/HoursTableSlot.astro";
+
+import { Image } from "astro:assets";
+
+const today = new Date().toISOString().slice(0, 10);
+---
+
+<Layout title="Muncher">
+	<div class="hero h-screen bg-base-200">
+		<div class="hero-content text-center">
+			<div class="max-w-md">
+				<h1 class="text-5xl font-bold">Muncher</h1>
+				<p class="py-6">The modern NUDining Replacement</p>
+				<a href="/#schedule" class="btn btn-primary">
+					Go see Weekly Schedule
+				</a>
+			</div>
+		</div>
+	</div>
+	<h2
+		id="schedule"
+		class="lg:text-3xl text-2xl font-bold items-center flex justify-center mb-4 mt-8"
+	>
+		Weekly Schedule
+	</h2>
+	<div class="flex flex-col items-center p-2 pt-0 xl:p-12">
+		<HoursTableSlot />
+	</div>
+</Layout>

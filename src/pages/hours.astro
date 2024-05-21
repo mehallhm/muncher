@@ -1,0 +1,18 @@
+---
+import Layout from "../layouts/Layout.astro";
+import HoursTableSlot from "@components/slots/HoursTableSlot.astro";
+import { Image } from "astro:assets";
+
+const today = new Date().toISOString().slice(0, 10);
+---
+
+<Layout title="Muncher | Schedule">
+	<h2
+		class="lg:text-3xl text-2xl font-bold mb-4 items-center flex justify-center"
+	>
+		Weekly Schedule
+	</h2>
+	<div class="flex flex-col items-center p-2 pt-0 xl:p-12">
+		<HoursTableSlot />
+	</div>
+</Layout>

@@ -1,0 +1,21 @@
+---
+import FoodTable from "./FoodTable.astro";
+
+import type { Item } from "../lib/types";
+interface Props {
+	title: string;
+	items: Item[];
+}
+
+const { title, items } = Astro.props;
+---
+
+<div
+	tabindex="0"
+	class="collapse collapse-plus border border-base-300 bg-base-200"
+>
+	<div class="collapse-title text-xl font-medium">{title}</div>
+	<div class="collapse-content bg-base-100">
+		<FoodTable title="" items={items} showFilters={false} />
+	</div>
+</div>

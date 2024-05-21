@@ -1,0 +1,12 @@
+<div
+	class="flex justify-center overflow-x-auto w-full h-screen"
+	hx-get="/api/get-hours-table"
+	hx-swap="outerHTML"
+	hx-trigger="load"
+	id="table-target"
+>
+	<div class="flex flex-col items-center">
+		<span class="loading loading-infinity loading-lg"></span>
+		 Grabbing Latest Hours...
+	</div>
+</div>

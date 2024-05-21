@@ -1,0 +1,87 @@
+---
+export const partial = true;
+
+import FoodTable from "@components/FoodTable.astro";
+import FoodCollapsable from "@components/FoodCollapsable.astro";
+import type { DineResponse } from "@lib/types.ts";
+
+const props = Astro.url.searchParams;
+const date = props.get("date") || new Date().toISOString().slice(0, 10);
+const filters = props.get("filters") || false;
+
+const response = await fetch(
+	"https://api.dineoncampus.com/v1/location/5f4f8a425e42ad17329be131/periods/64ed081d351d53c9d97d0590?" +
+		"platform=1&date=" +
+		date
+);
+const data: DineResponse = await response.json();
+
+const categories = data.menu.periods.categories;
+const sectionItems = {
+	latin: categories[0].items,
+	without: categories[1].items,
+	kosher: categories[2].items,
+	kosherDeli: categories[4].items,
+	mediter: categories[5].items,
+	spice: categories[6].items,
+	sweets: categories[7].items,
+	mezze: categories[8].items,
+	sushi: categories[9].items,
+	asian: categories[10].items,
+	asianToppings: categories[11].items,
+	united: categories[12].items,
+	grill: categories[13].items,
+	global: categories[14].items,
+};
+
+const empty = Object.values(sectionItems).every(
+	(section) => section.length === 0
+);
+---
+
+{
+	empty ? (
+		<div class="flex w-full justify-center">
+			<h2 class="text-lg font-semibold">
+				No data available for this day
+			</h2>
+		</div>
+	) : (
+		<div
+			class="overflow-x-auto flex flex-col gap-6 transition-all ease-in duration-200"
+			id="indicator"
+		>
+			<FoodTable
+				title="United Kitchen"
+				items={sectionItems.united}
+				showFilters={true}
+			/>
+			<FoodTable
+				title="Spice Bowl"
+				items={sectionItems.spice}
+				showFilters={true}
+			/>
+			<FoodTable
+				title="Asian Kitchen"
+				items={sectionItems.asian}
+				showFilters={true}
+			/>
+			<FoodTable
+				title="Latin Kitchen"
+				items={sectionItems.latin}
+				showFilters={true}
+			/>
+			<FoodTable
+				title="Delicious Without"
+				items={sectionItems.without}
+				showFilters={true}
+			/>
+			<div class="flex w-full justify-center">
+				<h2 class="text-lg font-semibold">Static</h2>
+			</div>
+			<FoodCollapsable title="Eggs" items={sectionItems.asianToppings} />
+			<FoodCollapsable title="Sweets" items={sectionItems.sweets} />
+			<FoodCollapsable title="Grill" items={sectionItems.grill} />
+		</div>
+	)
+}

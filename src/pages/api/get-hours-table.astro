@@ -1,0 +1,942 @@
+---
+export const partial = true;
+
+import { Image } from "astro:assets";
+import type { WeeklyHoursResponse } from "@lib/types";
+const planLength = 6;
+
+const today = new Date().toISOString().slice(0, 10);
+const nextWeek = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+	.toISOString()
+	.slice(0, 10);
+
+const sixDays = new Date(
+	new Date().getTime() + (planLength - 1) * 24 * 60 * 60 * 1000
+)
+	.toISOString()
+	.slice(0, 10);
+
+import bento from "@img/icons8-bento-48.png";
+import chips from "@img/icons8-fish-and-chips-48.png";
+import salad from "@img/icons8-greek-salad-48.png";
+
+const icons = [bento, chips, salad];
+
+// Get this weeks and next weeks hours
+const response = await fetch(
+	"https://api.dineoncampus.com/v1/locations/weekly_schedule?site_id=5751fd2b90975b60e048929a&date=" +
+		today
+);
+
+const weekFromTodayResponse = await fetch(
+	"https://api.dineoncampus.com/v1/locations/weekly_schedule?site_id=5751fd2b90975b60e048929a&date=" +
+		nextWeek
+);
+
+const data1: WeeklyHoursResponse = await response.json();
+const data2: WeeklyHoursResponse = await weekFromTodayResponse.json();
+
+const filteredLocations1 = data1.the_locations.filter(
+	(loc) => !loc.is_building
+);
+const filteredLocations2 = data2.the_locations.filter(
+	(loc) => !loc.is_building
+);
+
+// Combine them together
+const filteredLocations = filteredLocations1.map((loc) => {
+	return {
+		...loc,
+		week: loc.week.concat(
+			filteredLocations2.find((l) => l.id === loc.id)?.week || []
+		),
+	};
+});
+
+const moreFilterered = filteredLocations.map((loc) => {
+	return {
+		...loc,
+		week: loc.week.filter(
+			(day) => day.date >= today && day.date <= sixDays
+		),
+	};
+});
+
+// Generate the dates for the table
+function generateDates() {
+	let dates = [];
+	const today = new Date();
+	for (let i = 0; i < planLength; i++) {
+		const currentDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+		const dateFormatted = currentDate.toISOString().slice(0, 10);
+		dates.push(dateFormatted);
+	}
+	return dates;
+}
+const dates = generateDates();
+
+const diningHalls = [
+	{
+		item: moreFilterered.find(
+			(loc) => loc.id === "586d05e4ee596f6e6c04b527"
+		),
+		menu: "steast",
+		slug: "586d05e4ee596f6e6c04b527",
+	}, // Steast
+	{
+		item: moreFilterered.find(
+			(loc) => loc.id === "5f4f8a425e42ad17329be131"
+		),
+		menu: "iv",
+		slug: "5f4f8a425e42ad17329be131",
+	}, // IV
+	{
+		item: moreFilterered.find(
+			(loc) => loc.id === "5b9bd1c41178e90d4774210e"
+		),
+		menu: "stwest",
+		slug: "5b9bd1c41178e90d4774210e",
+	}, // Stwest
+];
+
+const curry = [
+	moreFilterered.find((loc) => loc.id === "5e610ef7c4b7ff129a46f656"), // Kigo
+	moreFilterered.find((loc) => loc.id === "5e610effc4b7ff129a46fc1c"), // Popeyes
+	moreFilterered.find((loc) => loc.id === "61ba1083b63f1e153264a11f"), // Boba
+	moreFilterered.find((loc) => loc.id === "61ba8081a9f13a167d965c4e"), // Burger
+	moreFilterered.find((loc) => loc.id === "61bb6a6db63f1e153bb7b10b"), // Sweet
+	moreFilterered.find((loc) => loc.id === "62f151f9e45d4305b9002f26"), // Pom
+];
+
+const other = [
+	moreFilterered.find((loc) => loc.id === "61e05e22b63f1e117b38658c"), // Outtakes
+	moreFilterered.find((loc) => loc.id === "5def2e7e4198d41a076edba4"), // Cafe Crossing
+	moreFilterered.find((loc) => loc.id === "5f3bf138a38afc0ea55f99d6"), // Churchill's
+	moreFilterered.find((loc) => loc.id === "5e6799901ca48e10a3c876a5"), // Subway
+	moreFilterered.find((loc) => loc.id === "5e6799001ca48e108bf2021c"), // cafe716
+	moreFilterered.find((loc) => loc.id === "62fee2a1c625af082fa90a66"), // Dunkin Shillman
+	moreFilterered.find((loc) => loc.id === "62fee33fc625af0793c2896d"), // Dunkin Hayden
+];
+
+const overflowClasses = (i: number, n: number) =>
+	i > n ? "hidden lg:table-cell lg:w-48 w-24" : "lg:w-48 w-24";
+---
+
+<div class="hidden md:flex flex-col gap-8 overflow-x-auto">
+	<table class="table w-full text-sm">
+		<caption class="pb-2 text-lg font-semibold">Dining Halls</caption>
+		<thead>
+			<tr>
+				<th>Location</th>
+				<th>Status</th>
+				{
+					dates.map((d, i) => (
+						<th class={overflowClasses(i, 3)}>
+							{d === today ? "Today" : d}
+						</th>
+					))
+				}
+			</tr>
+		</thead>
+		<tbody>
+			{
+				diningHalls.map((hall) => (
+					<tr>
+						<td class="flex justify-start gap-2 items-center">
+							<Image
+								class="w-10 h-10 rounded select-none"
+								src={
+									icons[
+										Math.floor(Math.random() * icons.length)
+									]
+								}
+								alt="Food Icons"
+							/>
+							<div
+								class="link tooltip lg:w-48 w-fit text-left link-hover"
+								data-tip="Go to Menu"
+							>
+								{hall.item?.name} &#x2197
+							</div>
+						</td>
+						<td>
+							<div
+								hx-get={
+									"/api/status/statusBadge?location=" +
+									hall.item?.id +
+									"&" +
+									"date=" +
+									today +
+									"&alternate=true"
+								}
+								hx-swap="outerHTML"
+								hx-trigger="load"
+								class="xl:w-48 w-32 h-full"
+							>
+								<div
+									id="status-badge"
+									class="flex justify-center gap-2"
+								>
+									<div
+										id="status-badge"
+										class="badge h-full text-center"
+									>
+										Fetching Status...
+									</div>
+								</div>
+							</div>
+						</td>
+						{hall.item?.week.map((s, i) => {
+							if (s.hours.length > 0) {
+								return (
+									<td class={overflowClasses(i, 3)}>
+										{(s.hours[0].start_hour % 12) +
+											":" +
+											s.hours[0].start_minutes +
+											(s.hours[0].start_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].start_hour > 12
+												? "pm"
+												: "am") +
+											" - " +
+											(s.hours[0].end_hour % 12) +
+											":" +
+											s.hours[0].end_minutes +
+											(s.hours[0].end_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].end_hour > 12
+												? "pm"
+												: "am")}
+									</td>
+								);
+							} else {
+								return (
+									<td class={overflowClasses(i, 3)}>
+										Closed
+									</td>
+								);
+							}
+						})}
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+	<table class="table w-full text-sm">
+		<caption class="pb-2 text-lg font-semibold">
+			Curry Student Center
+		</caption>
+		<thead>
+			<tr>
+				<th>Location</th>
+				<th>Status</th>
+				{
+					dates.map((d, i) => (
+						<th class={overflowClasses(i, 3)}>
+							{d === today ? "Today" : d}
+						</th>
+					))
+				}
+			</tr>
+		</thead>
+		<tbody>
+			{
+				curry.map((loc) => (
+					<tr>
+						<td class="flex justify-start gap-2 items-center">
+							<Image
+								class="w-10 h-10 rounded select-none"
+								src={
+									icons[
+										Math.floor(Math.random() * icons.length)
+									]
+								}
+								alt="Food Icons"
+							/>
+							<div class="lg:w-48 w-fit text-left">
+								{loc?.name}
+							</div>
+						</td>
+						<td>
+							<div
+								hx-get={
+									"/api/status/statusBadge?location=" +
+									loc?.id +
+									"&" +
+									"date=" +
+									today +
+									"&alternate=true"
+								}
+								hx-swap="outerHTML"
+								hx-trigger="load"
+								class="xl:w-48 w-32 h-full"
+							>
+								<div
+									id="status-badge"
+									class="flex justify-center gap-2"
+								>
+									<div
+										id="status-badge"
+										class="badge h-full text-center"
+									>
+										Fetching Status...
+									</div>
+								</div>
+							</div>
+						</td>
+						{loc?.week.map((s, i) => {
+							if (s.hours.length > 0) {
+								return (
+									<td class={overflowClasses(i, 3)}>
+										{(s.hours[0].start_hour % 12) +
+											":" +
+											s.hours[0].start_minutes +
+											(s.hours[0].start_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].start_hour > 12
+												? "pm"
+												: "am") +
+											" - " +
+											(s.hours[0].end_hour % 12) +
+											":" +
+											s.hours[0].end_minutes +
+											(s.hours[0].end_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].end_hour > 12
+												? "pm"
+												: "am")}
+									</td>
+								);
+							} else {
+								return (
+									<td class={overflowClasses(i, 3)}>
+										Closed
+									</td>
+								);
+							}
+						})}
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+	<table class="table w-full text-sm">
+		<caption class="pb-2 text-lg font-semibold">Other Locations</caption>
+		<thead>
+			<tr>
+				<th>Location</th>
+				<th>Status</th>
+				{
+					dates.map((d, i) => (
+						<th class={overflowClasses(i, 3)}>
+							{d === today ? "Today" : d}
+						</th>
+					))
+				}
+			</tr>
+		</thead>
+		<tbody>
+			{
+				other.map((loc) => (
+					<tr>
+						<td class="flex justify-start gap-2 items-center">
+							<Image
+								class="w-10 h-10 rounded select-none"
+								src={
+									icons[
+										Math.floor(Math.random() * icons.length)
+									]
+								}
+								alt="Food Icons"
+							/>
+							<div class="lg:w-48 w-fit text-left">
+								{loc?.name}
+							</div>
+						</td>
+						<td>
+							<div
+								hx-get={
+									"/api/status/statusBadge?location=" +
+									loc?.id +
+									"&" +
+									"date=" +
+									today +
+									"&alternate=true"
+								}
+								hx-swap="outerHTML"
+								hx-trigger="load"
+								class="xl:w-48 w-32 h-full"
+							>
+								<div
+									id="status-badge"
+									class="flex justify-center gap-2"
+								>
+									<div
+										id="status-badge"
+										class="badge h-full text-center"
+									>
+										Fetching Status...
+									</div>
+								</div>
+							</div>
+						</td>
+						{loc?.week.map((s, i) => {
+							if (s.hours.length > 0) {
+								return (
+									<td class={overflowClasses(i, 3)}>
+										{(s.hours[0].start_hour % 12) +
+											":" +
+											s.hours[0].start_minutes +
+											(s.hours[0].start_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].start_hour > 12
+												? "pm"
+												: "am") +
+											" - " +
+											(s.hours[0].end_hour % 12) +
+											":" +
+											s.hours[0].end_minutes +
+											(s.hours[0].end_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].end_hour > 12
+												? "pm"
+												: "am")}
+									</td>
+								);
+							} else {
+								return (
+									<td class={overflowClasses(i, 3)}>
+										Closed
+									</td>
+								);
+							}
+						})}
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</div>
+<div class="flex flex-col md:hidden gap-6">
+	<!-- {
+		diningHalls.map((loc) => (
+			<table class="table">
+				<caption class="pb-2 w-full">
+					<div class="flex flex-col">
+						<p class="text-lg font-normal text-center">
+							{loc.item?.name}
+						</p>
+						<div
+							hx-get={
+								"/api/status/statusBadge?location=" +
+								loc?.slug +
+								"&" +
+								"date=" +
+								today +
+								"&alternate=true"
+							}
+							hx-swap="outerHTML"
+							hx-trigger="load"
+							class=""
+						>
+							<div
+								id="status-badge"
+								class="flex justify-center gap-2"
+							>
+								<div
+									id="status-badge"
+									class="badge text-center"
+								>
+									Fetching Status...
+								</div>
+							</div>
+						</div>
+					</div>
+				</caption>
+				<tbody>
+					{loc.item?.week.map((s, i) => {
+						if (s.hours.length > 0) {
+							return (
+								<tr>
+									<td>{dates[i]}</td>
+									<td>
+										{(s.hours[0].start_hour % 12) +
+											":" +
+											s.hours[0].start_minutes +
+											(s.hours[0].start_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].start_hour > 12
+												? "pm"
+												: "am") +
+											" - " +
+											(s.hours[0].end_hour % 12) +
+											":" +
+											s.hours[0].end_minutes +
+											(s.hours[0].end_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].end_hour > 12
+												? "pm"
+												: "am")}
+									</td>
+								</tr>
+							);
+						} else {
+							return (
+								<tr>
+									<td>{dates[i]}</td>
+									<td>Closed</td>
+								</tr>
+							);
+						}
+					})}
+				</tbody>
+			</table>
+		))
+	}
+	{
+		curry.map((loc) => (
+			<table class="table">
+				<caption class="pb-2 w-full">
+					<div class="flex flex-col">
+						<p class="text-lg font-normal text-center">
+							{loc?.name}
+						</p>
+						<div
+							hx-get={
+								"/api/status/statusBadge?location=" +
+								loc?.id +
+								"&" +
+								"date=" +
+								today +
+								"&alternate=true"
+							}
+							hx-swap="outerHTML"
+							hx-trigger="load"
+							class=""
+						>
+							<div
+								id="status-badge"
+								class="flex justify-center gap-2"
+							>
+								<div
+									id="status-badge"
+									class="badge text-center"
+								>
+									Fetching Status...
+								</div>
+							</div>
+						</div>
+					</div>
+				</caption>
+				<tbody>
+					{loc?.week.map((s, i) => {
+						if (s.hours.length > 0) {
+							return (
+								<tr>
+									<td>{dates[i]}</td>
+									<td>
+										{(s.hours[0].start_hour % 12) +
+											":" +
+											s.hours[0].start_minutes +
+											(s.hours[0].start_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].start_hour > 12
+												? "pm"
+												: "am") +
+											" - " +
+											(s.hours[0].end_hour % 12) +
+											":" +
+											s.hours[0].end_minutes +
+											(s.hours[0].end_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].end_hour > 12
+												? "pm"
+												: "am")}
+									</td>
+								</tr>
+							);
+						} else {
+							return (
+								<tr>
+									<td>{dates[i]}</td>
+									<td>Closed</td>
+								</tr>
+							);
+						}
+					})}
+				</tbody>
+			</table>
+		))
+	}
+	{
+		other.map((loc) => (
+			<table class="table">
+				<caption class="pb-2 w-full">
+					<div class="flex flex-col">
+						<p class="text-lg font-normal text-center">
+							{loc?.name}
+						</p>
+						<div
+							hx-get={
+								"/api/status/statusBadge?location=" +
+								loc?.id +
+								"&" +
+								"date=" +
+								today +
+								"&alternate=true"
+							}
+							hx-swap="outerHTML"
+							hx-trigger="load"
+							class=""
+						>
+							<div
+								id="status-badge"
+								class="flex justify-center gap-2"
+							>
+								<div
+									id="status-badge"
+									class="badge text-center"
+								>
+									Fetching Status...
+								</div>
+							</div>
+						</div>
+					</div>
+				</caption>
+				<tbody>
+					{loc?.week.map((s, i) => {
+						if (s.hours.length > 0) {
+							return (
+								<tr>
+									<td>{dates[i]}</td>
+									<td>
+										{(s.hours[0].start_hour % 12) +
+											":" +
+											s.hours[0].start_minutes +
+											(s.hours[0].start_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].start_hour > 12
+												? "pm"
+												: "am") +
+											" - " +
+											(s.hours[0].end_hour % 12) +
+											":" +
+											s.hours[0].end_minutes +
+											(s.hours[0].end_minutes < 10
+												? "0"
+												: "") +
+											(s.hours[0].end_hour > 12
+												? "pm"
+												: "am")}
+									</td>
+								</tr>
+							);
+						} else {
+							return (
+								<tr>
+									<td>{dates[i]}</td>
+									<td>Closed</td>
+								</tr>
+							);
+						}
+					})}
+				</tbody>
+			</table>
+		))
+	} -->
+	<table class="table">
+		{
+			diningHalls.map((loc) => (
+				<>
+					<thead class="pb-2 w-full">
+						<tr class="flex flex-col">
+							<th>
+								<p class="text-lg font-normal text-center text-primary-content">
+									{loc.item?.name}
+								</p>
+								<div
+									hx-get={
+										"/api/status/statusBadge?location=" +
+										loc?.slug +
+										"&" +
+										"date=" +
+										today +
+										"&alternate=true"
+									}
+									hx-swap="outerHTML"
+									hx-trigger="load"
+									class=""
+								>
+									<div
+										id="status-badge"
+										class="flex justify-center gap-2"
+									>
+										<div
+											id="status-badge"
+											class="badge text-center font-normal"
+										>
+											Fetching Status...
+										</div>
+									</div>
+								</div>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{loc.item?.week.map((s, i) => {
+							if (s.hours.length > 0) {
+								return (
+									<tr>
+										<td>
+											<div class="flex justify-between">
+												<div>{dates[i]}</div>
+												<div>
+													{(s.hours[0].start_hour %
+														12) +
+														":" +
+														s.hours[0]
+															.start_minutes +
+														(s.hours[0]
+															.start_minutes < 10
+															? "0"
+															: "") +
+														(s.hours[0].start_hour >
+														12
+															? "pm"
+															: "am") +
+														" - " +
+														(s.hours[0].end_hour %
+															12) +
+														":" +
+														s.hours[0].end_minutes +
+														(s.hours[0]
+															.end_minutes < 10
+															? "0"
+															: "") +
+														(s.hours[0].end_hour >
+														12
+															? "pm"
+															: "am")}
+												</div>
+											</div>
+										</td>
+									</tr>
+								);
+							} else {
+								return (
+									<tr>
+										<td>
+											<div class="flex justify-between">
+												<p>{dates[i]}</p>
+												<p>Closed</p>
+											</div>
+										</td>
+									</tr>
+								);
+							}
+						})}
+					</tbody>
+				</>
+			))
+		}
+		{
+			curry.map((loc) => (
+				<>
+					<thead class="pb-2 w-full">
+						<tr class="flex flex-col">
+							<th>
+								<p class="text-lg font-normal text-center text-primary-content">
+									{loc?.name}
+								</p>
+								<div
+									hx-get={
+										"/api/status/statusBadge?location=" +
+										loc?.id +
+										"&" +
+										"date=" +
+										today +
+										"&alternate=true"
+									}
+									hx-swap="outerHTML"
+									hx-trigger="load"
+									class=""
+								>
+									<div
+										id="status-badge"
+										class="flex justify-center gap-2"
+									>
+										<div
+											id="status-badge"
+											class="badge text-center font-normal"
+										>
+											Fetching Status...
+										</div>
+									</div>
+								</div>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{loc?.week.map((s, i) => {
+							if (s.hours.length > 0) {
+								return (
+									<tr>
+										<td>
+											<div class="flex justify-between">
+												<div>{dates[i]}</div>
+												<div>
+													{(s.hours[0].start_hour %
+														12) +
+														":" +
+														s.hours[0]
+															.start_minutes +
+														(s.hours[0]
+															.start_minutes < 10
+															? "0"
+															: "") +
+														(s.hours[0].start_hour >
+														12
+															? "pm"
+															: "am") +
+														" - " +
+														(s.hours[0].end_hour %
+															12) +
+														":" +
+														s.hours[0].end_minutes +
+														(s.hours[0]
+															.end_minutes < 10
+															? "0"
+															: "") +
+														(s.hours[0].end_hour >
+														12
+															? "pm"
+															: "am")}
+												</div>
+											</div>
+										</td>
+									</tr>
+								);
+							} else {
+								return (
+									<tr>
+										<td>
+											<div class="flex justify-between">
+												<p>{dates[i]}</p>
+												<p>Closed</p>
+											</div>
+										</td>
+									</tr>
+								);
+							}
+						})}
+					</tbody>
+				</>
+			))
+		}
+		{
+			other.map((loc) => (
+				<>
+					<thead class="pb-2 w-full">
+						<tr class="flex flex-col">
+							<th>
+								<p class="text-lg font-normal text-center text-primary-content">
+									{loc?.name}
+								</p>
+								<div
+									hx-get={
+										"/api/status/statusBadge?location=" +
+										loc?.id +
+										"&" +
+										"date=" +
+										today +
+										"&alternate=true"
+									}
+									hx-swap="outerHTML"
+									hx-trigger="load"
+									class=""
+								>
+									<div
+										id="status-badge"
+										class="flex justify-center gap-2"
+									>
+										<div
+											id="status-badge"
+											class="badge text-center font-normal"
+										>
+											Fetching Status...
+										</div>
+									</div>
+								</div>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{loc?.week.map((s, i) => {
+							if (s.hours.length > 0) {
+								return (
+									<tr>
+										<td>
+											<div class="flex justify-between">
+												<div>{dates[i]}</div>
+												<div>
+													{(s.hours[0].start_hour %
+														12) +
+														":" +
+														s.hours[0]
+															.start_minutes +
+														(s.hours[0]
+															.start_minutes < 10
+															? "0"
+															: "") +
+														(s.hours[0].start_hour >
+														12
+															? "pm"
+															: "am") +
+														" - " +
+														(s.hours[0].end_hour %
+															12) +
+														":" +
+														s.hours[0].end_minutes +
+														(s.hours[0]
+															.end_minutes < 10
+															? "0"
+															: "") +
+														(s.hours[0].end_hour >
+														12
+															? "pm"
+															: "am")}
+												</div>
+											</div>
+										</td>
+									</tr>
+								);
+							} else {
+								return (
+									<tr>
+										<td>
+											<div class="flex justify-between">
+												<p>{dates[i]}</p>
+												<p>Closed</p>
+											</div>
+										</td>
+									</tr>
+								);
+							}
+						})}
+					</tbody>
+				</>
+			))
+		}
+	</table>
+</div>

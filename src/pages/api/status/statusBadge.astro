@@ -1,0 +1,82 @@
+---
+import type { StatusResponse, Status } from "@lib/types.ts";
+
+const today = new Date().toISOString().slice(0, 10);
+
+const props = Astro.url.searchParams;
+const date = props.get("date") || today;
+const location = props.get("location") || "";
+const alternate = props.get("alternate") || "false";
+
+const prospective = date !== today;
+
+let locationStatus: Status["status"] | undefined;
+let statusMessage: string = "Menu for " + date;
+let convertedColor: string = "badge-default";
+
+if (!prospective) {
+	const response = await fetch(
+		"https://api.dineoncampus.com/v1/locations/status?platform=1&site_id=5751fd2b90975b60e048929a"
+	);
+
+	const statuses: StatusResponse = await response.json();
+
+	locationStatus = statuses.locations.find(
+		(loc) => loc.id === location
+	)?.status;
+	if (!locationStatus) {
+		Astro.response.status = 400;
+	}
+
+	statusMessage = locationStatus?.message || "Closed";
+	const statusColor = locationStatus?.color || "red";
+	convertedColor =
+		statusColor === "red"
+			? "badge-error"
+			: statusColor === "green"
+			? "badge-success"
+			: "badge-warning";
+}
+
+if (alternate === "true" && locationStatus?.color === "red") {
+	convertedColor = "badge-error bg-error";
+	// statusMessage = "Curently Closed";
+} else if (alternate === "true" && locationStatus?.color === "green") {
+	convertedColor = "badge-success bg-success";
+} else if (alternate === "true" && locationStatus?.color === "orange") {
+	convertedColor = "badge-warning bg-warning";
+}
+---
+
+{
+	alternate === "false" &&
+		(() => (
+			<div
+				id="status-badge"
+				class="flex justify-center gap-2 transition-all ease-in duration-100"
+			>
+				<div class={"badge " + convertedColor}>{statusMessage}</div>
+				{prospective && (
+					<a
+						href={"/menu/" + { location } + "/d04f2?date=" + today}
+						class="badge badge-accent hover:badge-outline"
+					>
+						Go to today
+					</a>
+				)}
+			</div>
+		))
+}
+{
+	alternate === "true" &&
+		(() => (
+			<div
+				class={
+					"badge font-normal xl:w-48 md:w-32 h-full text-center md:text-xs lg:text-sm w-full " +
+					convertedColor
+				}
+			>
+				{statusMessage}
+			</div>
+		))
+}

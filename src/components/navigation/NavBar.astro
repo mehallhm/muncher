@@ -1,0 +1,42 @@
+---
+import { tree } from "@lib/tree";
+---
+
+<div class="navbar bg-base-100">
+	<div class="flex-1">
+		<a href="/" class="btn btn-ghost normal-case text-xl">Muncher</a>
+	</div>
+	<div class="flex-none">
+		<ul class="menu menu-horizontal px-1">
+			<li><a href="/hours">Hours</a></li>
+			<li>
+				<details class="z-50">
+					<summary> Dining Halls</summary>
+					<ul class="p-2 bg-base-100">
+						<li>
+							<a
+								href={`/menu/${tree[0].slug}/${tree[0].menus[1].slug}`}
+							>
+								Stetson East
+							</a>
+						</li>
+						<li>
+							<a
+								href={`/menu/${tree[1].slug}/${tree[1].menus[0].slug}`}
+							>
+								Stetson West
+							</a>
+						</li>
+						<li>
+							<a
+								href={`/menu/${tree[2].slug}/${tree[2].menus[0].slug}`}
+							>
+								International Village
+							</a>
+						</li>
+					</ul>
+				</details>
+			</li>
+		</ul>
+	</div>
+</div>

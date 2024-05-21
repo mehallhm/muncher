@@ -1,0 +1,21 @@
+---
+import Loader from "@components/Loader.astro";
+
+interface Props {
+	location: string;
+	menu: string;
+	date: string;
+}
+
+const { location, menu, date } = Astro.props;
+
+console.log(location, menu, date);
+---
+
+<div
+	hx-get={"/api/" + location + "/" + menu + "?date=" + date}
+	hx-trigger="load"
+	class="lg:p-12 p-2 lg:pt-4"
+>
+	<Loader />
+</div>

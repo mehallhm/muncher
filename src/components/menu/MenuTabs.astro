@@ -1,0 +1,11 @@
+---
+const { location, menu, currentPage, date } = Astro.props;
+---
+
+<a
+	href={"/menu/" + location.slug + "/" + menu.slug + "?date=" + date}
+	class={"tab tab-bordered " +
+		(menu.slug === currentPage.slug ? " tab-active" : "")}
+>
+	{menu.title}
+</a>

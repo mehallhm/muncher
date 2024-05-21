@@ -1,0 +1,79 @@
+---
+import Footer from "@components/navigation/Footer.astro";
+import NavBar from "@components/navigation/NavBar.astro";
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+import { ViewTransitions } from "astro:transitions";
+---
+
+<!doctype html>
+<html lang="en" data-theme="cupcake">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Astro description" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+
+		<ViewTransitions />
+
+		<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+		<script
+			src="https://unpkg.com/htmx.org@1.9.6"
+			integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
+			crossorigin="anonymous"></script>
+		<script src="https://unpkg.com/htmx.org/dist/ext/preload.js"></script>
+		<script>
+			// @ts-nocheck
+
+			htmx.defineExtension("hx-astro-view-transition", {
+				onEvent: function (name, evt: any) {
+					if (name === "htmx:afterRequest") {
+						const attributes = evt.target.attributes;
+						const viewTransitionTarget =
+							attributes["hx-view-transition"]?.value;
+						if (!viewTransitionTarget) {
+							return;
+						}
+						const a = document.createElement("a");
+						a.href = viewTransitionTarget;
+						document.body.appendChild(a);
+						a.dispatchEvent(
+							new PointerEvent("mouseenter", {
+								bubbles: true,
+								cancelable: true,
+							})
+						);
+						a.dispatchEvent(
+							new PointerEvent("click", {
+								bubbles: true,
+								cancelable: true,
+							})
+						);
+					}
+				},
+			});
+			// Runs on view transitions navigation
+			document.addEventListener("astro:after-swap", () =>
+				htmx.process(document)
+			);
+		</script>
+	</head>
+	<body hx-ext="hx-astro-view-transition">
+		<div class="flex flex-col h-screen justify-between">
+			<div class="flex items-center justify-center bg-error text-error-content p-2">
+				<p>Muncher's Menus are currently out of date! I will fix them once I get back from a DoC :) -M </p>
+			</div>
+			<NavBar />
+			<main class="mb-auto pt-2 z-0">
+				<slot />
+			</main>
+			<Footer />
+		</div>
+	</body>
+</html>

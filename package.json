@@ -1,0 +1,19 @@
+{
+	"name": "dining",
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"build": "astro check && astro build"
+	},
+	"dependencies": {
+		"@astrojs/check": "^0.2.1",
+		"@astrojs/tailwind": "^5.0.2",
+		"@astrojs/vercel": "^5.1.0",
+		"astro": "^3.4.0",
+		"tailwindcss": "^3.3.4",
+		"typescript": "^5.2.2"
+	},
+	"devDependencies": {
+		"daisyui": "^3.9.3"
+	}
+}

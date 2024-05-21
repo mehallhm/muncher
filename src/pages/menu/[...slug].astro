@@ -1,0 +1,51 @@
+---
+import Layout from "@layouts/Layout.astro";
+import { tree } from "@lib/tree";
+import MenuSlot from "@components/slots/MenuSlot.astro";
+import StatusBadgeSlot from "@components/slots/StatusBadgeSlot.astro";
+
+const props = Astro.url.searchParams;
+const date = props.get("date") || new Date().toISOString().slice(0, 10);
+
+const slug = Astro.params.slug || "";
+const path = slug.split("/");
+const location = tree.find((l) => l.slug === path[0]);
+if (!location) return Astro.redirect("/404");
+const menu = location.menus.find((m) => m.slug === path[1]);
+if (!menu) return Astro.redirect("/404");
+
+console.log(location, menu);
+---
+
+<Layout title={"Muncher | Menu"}>
+	<div class="flex flex-col items-center">
+		<h2 class="lg:text-3xl text-2xl font-bold">
+			{location.title}
+		</h2>
+		<StatusBadgeSlot location={location.id} date={date} />
+		<div class="tabs flex justify-center lg:mt-4 mt-2">
+			{
+				location.menus.map((m) => (
+					<a
+						href={
+							"/menu/" +
+							location.slug +
+							"/" +
+							m.slug +
+							"?date=" +
+							date
+						}
+						class={
+							"tab tab-bordered " +
+							(m.slug === menu.slug ? " tab-active" : "")
+						}
+					>
+						{m.title}
+					</a>
+				))
+			}
+		</div>
+
+		<MenuSlot location={location.slug} menu={menu.api} date={date} />
+	</div>
+</Layout>
